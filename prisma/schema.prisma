@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum QuestionType {
+  DSA
+  SYSTEM_DESIGN
+  BEHAVIORAL
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  password     String
+  role         Role       @default(USER)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  sessions     Session[]
+  attempts     Attempt[]
+
+  @@index([email])
+}
+
+model Session {
+  id           String     @id @default(uuid())
+  userId       String
+  type         QuestionType
+  technology   String     @default("javascript")
+  score        Float?
+  createdAt    DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts     Attempt[]
+
+  @@index([userId])
+  @@index([type, technology])
+  @@index([createdAt])
+}
+
+model Question {
+  id           String         @id @default(uuid())
+  content      String
+  type         QuestionType
+  technology   String         @default("javascript")
+  difficulty   Difficulty
+  tags         String[]
+
+  createdAt    DateTime       @default(now())
+
+  attempts     Attempt[]
+
+  @@index([type, technology, difficulty])
+  @@index([technology])
+  @@index([tags])
+}
+
+model Attempt {
+  id           String     @id @default(uuid())
+  userId       String
+  sessionId    String
+  questionId   String
+
+  answer       String
+  feedback     String?
+  score        Float?
+
+  createdAt    DateTime   @default(now())
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session      Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([questionId])
+  @@unique([sessionId, questionId])
+}
