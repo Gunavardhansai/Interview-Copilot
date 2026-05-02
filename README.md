@@ -170,6 +170,23 @@ NEXTAUTH_URL
 
 `OPENAI_API_KEY` is optional. If it is missing, the app still builds and runs with fallback answer feedback and fallback dashboard insights.
 
+For `NEXTAUTH_URL`, use your deployed Vercel URL, for example:
+
+```text
+https://your-project.vercel.app
+```
+
+`DATABASE_URL` must point to a hosted PostgreSQL database, such as Neon, Supabase, Railway, or Vercel Postgres. A local `localhost` database URL will not work from Vercel.
+
+After creating the hosted database, sync the Prisma schema and seed questions against that database:
+
+```bash
+npm run db:push
+npm run db:seed
+```
+
+If you run these commands from your machine, make sure your local `.env` temporarily points to the same hosted `DATABASE_URL` used by Vercel.
+
 ## Testing
 
 ```bash

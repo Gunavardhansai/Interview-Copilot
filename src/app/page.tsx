@@ -44,7 +44,10 @@ export default function Home() {
           return;
         }
 
-        setMessage(data.error ?? "Failed to start interview");
+        setMessage(
+          data.error ??
+            "Failed to start interview. Check Vercel environment variables."
+        );
         return;
       }
 

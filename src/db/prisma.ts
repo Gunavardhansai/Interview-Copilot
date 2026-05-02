@@ -8,6 +8,10 @@ const globalForPrisma = global as unknown as {
 };
 
 function createPrismaClient() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("Missing DATABASE_URL. Add it to your Vercel environment variables.");
+  }
+
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
   });
@@ -18,9 +22,19 @@ function createPrismaClient() {
   });
 }
 
-export const db =
-  globalForPrisma.prisma ?? createPrismaClient();
+function getPrismaClient() {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = db;
+  return globalForPrisma.prisma;
 }
+
+export const db = new Proxy({} as PrismaClient, {
+  get(_target, property, receiver) {
+    const client = getPrismaClient();
+    const value = Reflect.get(client, property, receiver);
+
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});

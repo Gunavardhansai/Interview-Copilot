@@ -8,7 +8,50 @@ import {
 } from "@/modules/interview/services/interview.service";
 import { auth } from "@/lib/auth";
 
+function getDeploymentConfigError() {
+  if (!process.env.NEXTAUTH_SECRET) {
+    return "Missing NEXTAUTH_SECRET in Vercel environment variables.";
+  }
+
+  if (!process.env.DATABASE_URL) {
+    return "Missing DATABASE_URL in Vercel environment variables.";
+  }
+
+  return null;
+}
+
+function getSessionStartError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return "Failed to create session";
+  }
+
+  if (
+    error.message.includes("does not exist") ||
+    error.message.includes("Unknown argument") ||
+    error.message.includes("database") ||
+    error.message.includes("schema")
+  ) {
+    return "Database is not ready. Set DATABASE_URL, run Prisma schema sync, and seed questions.";
+  }
+
+  if (
+    error.message.includes("Can't reach database") ||
+    error.message.includes("Connection") ||
+    error.message.includes("connect")
+  ) {
+    return "Cannot connect to the database. Check the Vercel DATABASE_URL value.";
+  }
+
+  return error.message || "Failed to create session";
+}
+
 export async function POST(req: Request) {
+  const configError = getDeploymentConfigError();
+
+  if (configError) {
+    return NextResponse.json({ error: configError }, { status: 503 });
+  }
+
   try {
     const session = await auth();
 
@@ -43,9 +86,11 @@ export async function POST(req: Request) {
       ...newSession,
       questions,
     });
-  } catch {
+  } catch (error) {
+    console.error("Failed to create interview session", error);
+
     return NextResponse.json(
-      { error: "Failed to create session" },
+      { error: getSessionStartError(error) },
       { status: 500 }
     );
   }
