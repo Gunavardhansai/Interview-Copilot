@@ -30,7 +30,7 @@ The primary users are developers preparing for software engineering interviews, 
 - Browser speech synthesis for reading prompts aloud when supported.
 - AI answer feedback with a local fallback when `OPENAI_API_KEY` is not configured.
 - Scores and saved attempts per session.
-- Dashboard with recent answers and AI-generated insights.
+- Dashboard with recent answers and AI-generated insights or fallback recommendations.
 - Basic rate limiting, input sanitization, RBAC helper, and security headers.
 
 ## Tech Stack
@@ -77,7 +77,7 @@ Notes:
 - `DATABASE_URL` is required.
 - `NEXTAUTH_SECRET` is required for authentication.
 - `NEXTAUTH_URL` should match your local or deployed app URL.
-- `OPENAI_API_KEY` is optional. Without it, answer evaluation uses the built-in fallback feedback.
+- `OPENAI_API_KEY` is optional. Without it, answer evaluation and dashboard insights use built-in fallback feedback.
 
 ## Setup From Start To End
 
@@ -158,6 +158,18 @@ npm run start
 
 The production build runs `prisma generate` first so the generated client matches `prisma/schema.prisma`.
 
+## Vercel Deployment
+
+Set these Vercel environment variables before deploying:
+
+```text
+DATABASE_URL
+NEXTAUTH_SECRET
+NEXTAUTH_URL
+```
+
+`OPENAI_API_KEY` is optional. If it is missing, the app still builds and runs with fallback answer feedback and fallback dashboard insights.
+
 ## Testing
 
 ```bash
@@ -193,9 +205,9 @@ Seed the database:
 npm run db:seed
 ```
 
-### AI insights fail
+### AI insights use fallback text
 
-Check `OPENAI_API_KEY`. The interview answer evaluator has a fallback, but dashboard insights call the OpenAI API when attempts exist.
+Set `OPENAI_API_KEY` to enable deeper AI-generated strengths, weaknesses, and topic recommendations.
 
 ## Implementation Notes
 
@@ -204,4 +216,3 @@ Check `OPENAI_API_KEY`. The interview answer evaluator has a fallback, but dashb
 - Pages are Server Components by default. Interactive pages such as the interview room use Client Components.
 - The question bank is stored in Postgres and seeded from `prisma/seed.ts`.
 - Session ownership is checked before loading sessions or saving attempts.
-#

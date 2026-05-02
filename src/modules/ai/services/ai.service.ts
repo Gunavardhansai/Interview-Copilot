@@ -3,9 +3,19 @@
 import OpenAI from "openai";
 import { getTechnologyMeta } from "@/modules/interview/technologies";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+
+  openaiClient ??= new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
+  return openaiClient;
+}
 
 function fallbackEvaluation(
   question: string,
@@ -35,8 +45,9 @@ export async function evaluateAnswer(
   technology = "javascript"
 ) {
   const technologyLabel = getTechnologyMeta(technology).label;
+  const openai = getOpenAIClient();
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!openai) {
     return fallbackEvaluation(question, answer, technology);
   }
 
